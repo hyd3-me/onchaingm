@@ -6,14 +6,29 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 import config
 
 
-def get_chain_rpc(chain_name):
-    eth_sepolia = 'https://eth-sepolia.g.alchemy.com/v2/OXUlCB_5QwG0GR_gJhmTrehy4RiUtn8Q'
-    monad_test  = 'https://monad-testnet.g.alchemy.com/v2/OXUlCB_5QwG0GR_gJhmTrehy4RiUtn8Q'
-    mega        = 'https://carrot.megaeth.com/rpc'
-    somnia      = 'https://dream-rpc.somnia.network'
-    return somnia
+def get_contract_address_onchaingm(chain_name):
+    contract_addresses_dict = {
+        "eth_sepolia":  "0x905415eb04E331d9edA60c67fcAa36e019Ab3C96",
+        'base_sepolia': '0xd932af3476A503ff3B07FDFf1A9B9e3febd29f29',
+        "monad":        "0xe48DF32fe1D7d4b73d1Af33A2edd65495945fDcD",
+        "mega":         "0x28D63f2386fC39D0B89608Fd25F51B31055B7892",
+        'somnia':       '0x7B2865d1387b1a5ce2D2465cfF8c6C3058a66De4',
+        "rise":         "0x779F6E324f16604B0F31B2D12a0C2EEeBB7f83F8",
+        "moca":         "0x69ff78Ec3A743D040f6D1434737aeb1F67db3eA6",
+        "kite":         "0x8Ce0D61503a90CC6dd6ae8F1AAf7FA6e2B32d30f", #poa
+        'incentiv':     '0x139c68fC3ffA5685D43d72b5Da5755241b0D0137', #poa
+        'camp':         '0x13B01762426C4386D24C0e211fC67b0fc71dcfEE',
+        'pharos':       '0x55F8D7108867f71827bEF25B261822dd4df5d9C5',
+        '0g':           '0xcdfE091654eb9Bea9406052E9c1Ffe715c6030be',
+        'sahara':       '0x7345847282E87fa3Ae842CBdAD4D1b7fAc17B24C', #poa
+        'nexus':        '0x0492225322A80f531bd746110b8138d8361B9Fc5',
+    }
+    return contract_addresses_dict.get(chain_name)
 
-def web3gm(chain_name):
+def get_chain_rpc(chain_name):
+    return config.rpc_name_dict.get(chain_name)
+
+def web3gm(chain_name, ):
     rpc_url = get_chain_rpc(chain_name)
     web3 = Web3(Web3.HTTPProvider(rpc_url))
 
@@ -29,23 +44,19 @@ def web3gm(chain_name):
 
     # Проверяем подключение
     if web3.is_connected():
-        print("Подключено")
         # Получаем chainId
         chain_id = web3.eth.chain_id
-        print(f"Chain ID: {chain_id}")
+        print(f"Подключено к {chain_name} ID: {chain_id}")
         native_token = 'ETH' # добавить функцию получение имени токена
         # Получаем баланс в wei
         balance_wei = web3.eth.get_balance(checksum_address)
-        print(f'wei: {balance_wei}')
         
         # Конвертируем в ETH
         balance_eth = web3.from_wei(balance_wei, 'ether')
         print(f"Баланс: {balance_eth} ETH")
 
         # Адрес контракта
-        contract_address = "0x905415eb04E331d9edA60c67fcAa36e019Ab3C96" #sepolia
-        contract_address = "0xe48DF32fe1D7d4b73d1Af33A2edd65495945fDcD" #monad
-        contract_address = "0x28D63f2386fC39D0B89608Fd25F51B31055B7892" #mega
+        contract_address = get_contract_address_onchaingm(chain_name)
         
         # ABI контракта
         abi = [
@@ -83,7 +94,7 @@ def web3gm(chain_name):
 	}
 ]
         contract = web3.eth.contract(address=contract_address, abi=abi)
-        greeting = "GM"
+        greeting = f"GM"
         try:
             gas_estimate = contract.functions.sendGM(greeting).estimate_gas({'from': account_address})
             gas_limit = gas_estimate + int(gas_estimate * 0.1)  # 10% запас
@@ -97,33 +108,44 @@ def web3gm(chain_name):
             max_priority_fee = web3.eth.max_priority_fee  # Рекомендуемая приоритетная комиссия
         except ValueError:
             max_priority_fee = web3.to_wei('2', 'gwei')  # Запасное значение
-        base_fee = web3.eth.get_block('latest')['baseFeePerGas']
-        max_fee_per_gas = base_fee + max_priority_fee
-        max_fee_limit = web3.to_wei('150', 'gwei')
+        try:
+            base_fee = web3.eth.get_block('latest')['baseFeePerGas']
+            max_fee_per_gas = base_fee + max_priority_fee
+            max_fee_limit = web3.to_wei('150', 'gwei')
+            print(f"Базовая комиссия: {web3.from_wei(base_fee, 'gwei')} gwei")
+            print(f"Приоритетная комиссия: {web3.from_wei(max_priority_fee, 'gwei')} gwei")
+            print(f"Максимальная комиссия: {web3.from_wei(max_fee_per_gas, 'gwei')} gwei")
 
-        print(f"Базовая комиссия: {web3.from_wei(base_fee, 'gwei')} gwei")
-        print(f"Приоритетная комиссия: {web3.from_wei(max_priority_fee, 'gwei')} gwei")
-        print(f"Максимальная комиссия: {web3.from_wei(max_fee_per_gas, 'gwei')} gwei")
+            if max_fee_per_gas > max_fee_limit:
+                print("Комиссия слишком высокая, транзакция не отправлена")
+                exit()
 
-        if max_fee_per_gas > max_fee_limit:
-            print("Комиссия слишком высокая, транзакция не отправлена")
-            exit()
+            # Рассчитываем стоимость
+            estimated_cost_wei = gas_limit * max_fee_per_gas
+            estimated_cost_eth = web3.from_wei(estimated_cost_wei, 'ether')
+            print(f"Оценочная стоимость транзакции: {estimated_cost_eth} {native_token}")
 
-        # Рассчитываем стоимость
-        estimated_cost_wei = gas_limit * max_fee_per_gas
-        estimated_cost_eth = web3.from_wei(estimated_cost_wei, 'ether')
-        print(f"Оценочная стоимость транзакции: {estimated_cost_eth} {native_token}")
-
-        # Строим транзакцию
-        tx = contract.functions.sendGM(greeting).build_transaction({
-            'from': account_address,
-            'nonce': web3.eth.get_transaction_count(account_address),
-            'gas': gas_limit,
-            'maxPriorityFeePerGas': max_priority_fee,
-            'maxFeePerGas': max_fee_per_gas,
-            'chainId': chain_id
-        })
-
+            # Строим транзакцию
+            tx_param = {
+                'from': account_address,
+                'nonce': web3.eth.get_transaction_count(account_address),
+                'gas': gas_limit,
+                'maxPriorityFeePerGas': max_priority_fee,
+                'maxFeePerGas': max_fee_per_gas,
+                'chainId': chain_id
+            }
+        except Exception as e:
+            print(f'обработанная ошибка:\n{e}')
+            gas_price = web3.eth.gas_price
+            print(f"Gas Price: {web3.from_wei(gas_price, 'gwei')} gwei")
+            tx_param = {
+                'from': account_address,
+                'nonce': web3.eth.get_transaction_count(account_address),
+                'gas': gas_limit,
+                'gasPrice': gas_price,
+                'chainId': chain_id
+            }
+        tx = contract.functions.sendGM(greeting).build_transaction(tx_param)
         # Подписываем и отправляем
         signed_tx = web3.eth.account.sign_transaction(tx, private_key)
         tx_hash = web3.eth.send_raw_transaction(signed_tx.raw_transaction)
@@ -131,8 +153,10 @@ def web3gm(chain_name):
 
         # Ждём подтверждения
         receipt = web3.eth.wait_for_transaction_receipt(tx_hash)
-        print(f"Транзакция подтверждена в блоке: {receipt.blockNumber}")
+        print(f"Транзакция подтверждена в блоке: {receipt.blockNumber}\n")
         pass
+    else:
+        print(f'not connected')
 
 def main(chain_list):
     for name in chain_list:
@@ -140,6 +164,6 @@ def main(chain_list):
     pass
 
 if __name__ == "__main__":
-    chain_list = ['sepolia', ]
+    chain_list = ['incentiv', ]
     main(chain_list)
     print(f'script done\n')
