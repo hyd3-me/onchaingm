@@ -6,6 +6,13 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 import config
 
 
+def is_poa_network(web3):
+    try:
+        block = web3.eth.get_block('latest')
+        return len(block.get('extraData', b'')) > 32
+    except:
+        return True  # По умолчанию считаем PoA
+
 def get_chain_rpc(chain_name):
     return config.rpc_name_dict.get(chain_name)
 
@@ -26,47 +33,60 @@ def get_balance(web3, account_address):
 
 def get_tx_param(web3, account_address, chain_id, amount_wei, nonce):
     # Определяем параметры газа (EIP-1559)
-    gas_limit = 21000 # Стандартный лимит газа для простого перевода
+    gas_estimate = web3.eth.estimate_gas({
+    'from': account_address,
+    'to': account_address,
+    'value': amount_wei
+    })
+    gas_limit = int(gas_estimate * 1.1)  # 10% запас
     try:
         max_priority_fee = web3.eth.max_priority_fee  # Рекомендуемая приоритетная комиссия
     except ValueError:
         max_priority_fee = web3.to_wei('2', 'gwei')  # Запасное значение
-    try:
-        base_fee = web3.eth.get_block('latest')['baseFeePerGas']
-        max_fee_per_gas = base_fee + max_priority_fee
-        max_fee_limit = web3.to_wei('150', 'gwei')
-        print(f"Базовая комиссия: {web3.from_wei(base_fee, 'gwei')} gwei")
-        print(f"Приоритетная комиссия: {web3.from_wei(max_priority_fee, 'gwei')} gwei")
-        print(f"Максимальная комиссия: {web3.from_wei(max_fee_per_gas, 'gwei')} gwei")
-
-        if max_fee_per_gas > max_fee_limit:
-            print("Комиссия слишком высокая, транзакция не отправлена")
+    
+    if is_poa_network(web3):
+        try:
+            gas_price = web3.eth.gas_price
+            print(f"Gas Price: {web3.from_wei(gas_price, 'gwei')} gwei")
+            tx_param = {
+                'from': account_address,
+                'to': account_address,
+                'value': amount_wei,
+                'nonce': nonce,
+                'gas': gas_limit,
+                'gasPrice': gas_price,
+                'chainId': chain_id
+            }
+        except Exception as e:
+            print(f'ошибка при создании транзакции для POA:\n{e}')
             exit()
-        
-        # Строим транзакцию
-        tx_param = {
-            'maxPriorityFeePerGas': max_priority_fee,
-            'maxFeePerGas': max_fee_per_gas,
-            'from': account_address,
-            'to': account_address,
-            'value': amount_wei,
-            'nonce': nonce,
-            'gas': gas_limit,
-            'chainId': chain_id
-        }
-    except Exception as e:
-        print(f'обработанная ошибка:\n{e}')
-        gas_price = web3.eth.gas_price
-        print(f"Gas Price: {web3.from_wei(gas_price, 'gwei')} gwei")
-        tx_param = {
-            'from': account_address,
-            'to': account_address,
-            'value': amount_wei,
-            'nonce': nonce,
-            'gas': gas_limit,
-            'gasPrice': gas_price,
-            'chainId': chain_id
-        }
+    else:
+        try:
+            base_fee = web3.eth.get_block('latest')['baseFeePerGas']
+            max_fee_per_gas = base_fee + max_priority_fee
+            max_fee_limit = web3.to_wei('150', 'gwei')
+            print(f"Базовая комиссия: {web3.from_wei(base_fee, 'gwei')} gwei")
+            print(f"Приоритетная комиссия: {web3.from_wei(max_priority_fee, 'gwei')} gwei")
+            print(f"Максимальная комиссия: {web3.from_wei(max_fee_per_gas, 'gwei')} gwei")
+
+            if max_fee_per_gas > max_fee_limit:
+                print("Комиссия слишком высокая, транзакция не отправлена")
+                exit()
+            
+            # Строим транзакцию
+            tx_param = {
+                'maxPriorityFeePerGas': max_priority_fee,
+                'maxFeePerGas': max_fee_per_gas,
+                'from': account_address,
+                'to': account_address,
+                'value': amount_wei,
+                'nonce': nonce,
+                'gas': gas_limit,
+                'chainId': chain_id
+            }
+        except Exception as e:
+            print(f'ошибка при создании транзакции для POS:\n{e}')
+            exit()
     return tx_param
 
 def send_token(chain_name, _count=5):
@@ -102,17 +122,20 @@ def send_token(chain_name, _count=5):
 
             # Ждём подтверждения
             receipt = web3.eth.wait_for_transaction_receipt(tx_hash)
-            print(f"Транзакция подтверждена в блоке: {receipt.blockNumber}\n")
+            if receipt.status == 1:
+                nonce += 1
+                print(f"Транзакция подтверждена в блоке: {receipt.blockNumber}\n")
+            else:
+                print("Транзакция провалилась\n")
         except Exception as e:
             print(f'обработанная ошибка в цикле функции send_token:\n{e}')
-        nonce += 1
 
 def main(chain_list):
     for name in chain_list:
         send_token(name)
 
 if __name__ == "__main__":
-    chain_list = ['irys', 'eth_sepolia', 'monad', 'mega', 'somnia', 'rise', 'base_sepolia', 'moca', 'kite', 'incentiv', 'camp', 'pharos', '0g', 'sahara', 'nexus']
-    #chain_list = ['rise', ] 
+    #chain_list = ['irys', 'eth_sepolia', 'monad', 'mega', 'somnia', 'rise', 'base_sepolia', 'moca', 'kite', 'incentiv', 'camp', 'pharos', '0g', 'sahara', 'nexus']
+    chain_list = ['pharos', ] 
     main(chain_list)
     print(f'script done\n\n')
