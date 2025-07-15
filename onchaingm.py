@@ -22,6 +22,7 @@ def get_contract_address_onchaingm(chain_name):
         '0g':           '0xcdfE091654eb9Bea9406052E9c1Ffe715c6030be',
         'sahara':       '0x7345847282E87fa3Ae842CBdAD4D1b7fAc17B24C', #poa
         'nexus':        '0x0492225322A80f531bd746110b8138d8361B9Fc5',
+        'seismic':      '0xe19F5585061452c29f5E187DF93e12eB0794686f',
         'irys':         '',
     }
     return contract_addresses_dict.get(chain_name)
@@ -98,7 +99,7 @@ def get_tx(web3, chain_name, account_address, native_token, chain_id):
     try:
         base_fee = web3.eth.get_block('latest')['baseFeePerGas']
         max_fee_per_gas = base_fee + max_priority_fee
-        max_fee_limit = web3.to_wei('150', 'gwei')
+        max_fee_limit = web3.to_wei('200', 'gwei')
         print(f"Базовая комиссия: {web3.from_wei(base_fee, 'gwei')} gwei")
         print(f"Приоритетная комиссия: {web3.from_wei(max_priority_fee, 'gwei')} gwei")
         print(f"Максимальная комиссия: {web3.from_wei(max_fee_per_gas, 'gwei')} gwei")
@@ -167,7 +168,7 @@ def main(chain_list):
         sendGM(name)
 
 if __name__ == "__main__":
-    # chain_list = ['irys', 'eth_sepolia', 'monad', 'mega', 'somnia', 'rise', 'base_sepolia', 'moca', 'kite', 'incentiv', 'camp', 'pharos', '0g', 'sahara', 'nexus']
-    chain_list = ['pharos', ] 
+    chain_list = ['irys', 'eth_sepolia', 'monad', 'mega', 'somnia', 'rise', 'base_sepolia', 'moca', 'kite', 'incentiv', 'camp', 'pharos', '0g', 'sahara', 'nexus']
+    #chain_list = ['seismic', ] 
     main(chain_list)
     print(f'script done\n')

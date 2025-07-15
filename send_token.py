@@ -64,7 +64,7 @@ def get_tx_param(web3, account_address, chain_id, amount_wei, nonce):
         try:
             base_fee = web3.eth.get_block('latest')['baseFeePerGas']
             max_fee_per_gas = base_fee + max_priority_fee
-            max_fee_limit = web3.to_wei('150', 'gwei')
+            max_fee_limit = web3.to_wei('200', 'gwei')
             print(f"Базовая комиссия: {web3.from_wei(base_fee, 'gwei')} gwei")
             print(f"Приоритетная комиссия: {web3.from_wei(max_priority_fee, 'gwei')} gwei")
             print(f"Максимальная комиссия: {web3.from_wei(max_fee_per_gas, 'gwei')} gwei")
@@ -135,7 +135,7 @@ def main(chain_list):
         send_token(name)
 
 if __name__ == "__main__":
-    #chain_list = ['irys', 'eth_sepolia', 'monad', 'mega', 'somnia', 'rise', 'base_sepolia', 'moca', 'kite', 'incentiv', 'camp', 'pharos', '0g', 'sahara', 'nexus']
-    chain_list = ['pharos', ] 
+    chain_list = ['irys', 'eth_sepolia', 'monad', 'mega', 'somnia', 'rise', 'base_sepolia', 'moca', 'kite', 'incentiv', 'camp', 'pharos', '0g', 'sahara', 'nexus']
+    #chain_list = ['seismic', ] 
     main(chain_list)
     print(f'script done\n\n')
