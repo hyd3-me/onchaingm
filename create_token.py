@@ -198,7 +198,7 @@ def main(chain_list):
         create_token(name)
 
 if __name__ == '__main__':
-    #chain_list = ['irys', 'eth_sepolia', 'monad', 'mega', 'somnia', 'rise', 'base_sepolia', 'moca', 'kite', 'incentiv', 'camp', 'pharos', '0g', 'sahara', 'nexus']
-    chain_list = ['base_sepolia', ]
+    chain_list = ['irys', 'eth_sepolia', 'monad', 'mega', 'somnia', 'rise', 'base_sepolia', 'moca', 'kite', 'incentiv', 'camp', 'pharos', '0g', 'sahara', 'nexus']
+    #chain_list = ['base_sepolia', ]
     main(chain_list)
     print(f'script done\n')

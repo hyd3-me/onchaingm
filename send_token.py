@@ -18,7 +18,7 @@ def get_chain_rpc(chain_name):
 
 def getWeb3(chain_name):
     rpc_url = get_chain_rpc(chain_name)
-    web3 = Web3(Web3.HTTPProvider(rpc_url))
+    web3 = Web3(Web3.HTTPProvider(rpc_url, request_kwargs={'timeout': 20}))
     # Проверяем подключение
     if not web3.is_connected():
         print(f'failed to connect to the {chain_name}\n')
@@ -135,7 +135,7 @@ def main(chain_list):
         send_token(name)
 
 if __name__ == "__main__":
-    chain_list = ['irys', 'eth_sepolia', 'monad', 'mega', 'somnia', 'rise', 'base_sepolia', 'moca', 'kite', 'incentiv', 'camp', 'pharos', '0g', 'sahara', 'nexus']
-    #chain_list = ['seismic', ] 
+    #chain_list = ['irys', 'eth_sepolia', 'monad', 'mega', 'somnia', 'rise', 'base_sepolia', 'moca', 'kite', 'incentiv', 'camp', 'pharos', '0g', 'sahara', 'nexus']
+    chain_list = ['mega', ] 
     main(chain_list)
     print(f'script done\n\n')
