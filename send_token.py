@@ -1,5 +1,7 @@
 from web3 import Web3
+from web3.gas_strategies.time_based import fast_gas_price_strategy, medium_gas_price_strategy, slow_gas_price_strategy
 import os, sys
+
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 
@@ -31,13 +33,21 @@ def get_balance(web3, account_address):
     # Конвертируем в ETH
     return web3.from_wei(balance_wei, 'ether')
 
-def get_tx_param(web3, account_address, chain_id, amount_wei, nonce):
+def get_tx_param(web3, account_address, chain_id, amount_wei, nonce, fee_level='low'):
     # Определяем параметры газа (EIP-1559)
     gas_estimate = web3.eth.estimate_gas({
     'from': account_address,
     'to': account_address,
     'value': amount_wei
     })
+    # Выбор стратегии газа
+    gas_strategies = {
+        'low': slow_gas_price_strategy,      # 1 час
+        'normal': medium_gas_price_strategy, # 5 минут
+        'high': fast_gas_price_strategy      # 60 секунд
+    }
+    strategy = gas_strategies.get(fee_level.lower(), medium_gas_price_strategy)
+    web3.eth.set_gas_price_strategy(strategy)
     gas_limit = int(gas_estimate * 1.1)  # 10% запас
     try:
         max_priority_fee = web3.eth.max_priority_fee  # Рекомендуемая приоритетная комиссия
@@ -136,6 +146,6 @@ def main(chain_list):
 
 if __name__ == "__main__":
     #chain_list = ['irys', 'eth_sepolia', 'monad', 'mega', 'somnia', 'rise', 'base_sepolia', 'moca', 'kite', 'incentiv', 'camp', 'pharos', '0g', 'sahara', 'nexus']
-    chain_list = ['mega', ] 
+    chain_list = ['somnia', ] 
     main(chain_list)
     print(f'script done\n\n')
