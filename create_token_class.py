@@ -60,7 +60,7 @@ class NetworkHandler:
         if not self.is_pos:
             web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
         if not web3.is_connected():
-            logging.error(f"Не удалось подключиться к {self.chain_name}")
+            raise NetworkHandlerError(f"Не удалось подключиться к {chain_name}")
             return None
         else:
             logging.info(f"Подключено к {self.chain_name} ID: {self.chain_id}")
