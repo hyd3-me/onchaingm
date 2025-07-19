@@ -40,8 +40,6 @@ class NetworkHandler:
         self.chain_name = chain_name
         self.rpc_url = config.rpc_name_dict.get(chain_name)
         self.web3 = self._connect()
-        if not self.web3:
-            raise NetworkHandlerError(f"Не удалось подключиться к {chain_name}")
         self.account_address = Web3.to_checksum_address(config.main_addr)
         if not self.account_address:
             raise NetworkHandlerError(f"Адрес аккаунта не найден для сети {chain_name}")
@@ -53,15 +51,14 @@ class NetworkHandler:
     def _connect(self):
         """Подключается к сети и возвращает объект Web3."""
         if not self.rpc_url:
-            raise NetworkHandlerError(f"RPC для сети {chain_name} не найден")
+            raise NetworkHandlerError(f"RPC для сети {self.chain_name} не найден")
         web3 = Web3(Web3.HTTPProvider(self.rpc_url))
         self.is_pos = self.is_pos_network(web3)
         self.chain_id = web3.eth.chain_id if web3 else None
         if not self.is_pos:
             web3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
         if not web3.is_connected():
-            raise NetworkHandlerError(f"Не удалось подключиться к {chain_name}")
-            return None
+            raise NetworkHandlerError(f"Не удалось подключиться к {self.chain_name}")
         else:
             logging.info(f"Подключено к {self.chain_name} ID: {self.chain_id}")
         return web3
@@ -196,7 +193,7 @@ def main(chain_list):
 
 if __name__ == "__main__":
     logging.info("скрипт выполняется")
-    chain_list = ['irys', 'eth_sepolia', 'monad', 'mega', 'somnia', 'rise', 'base_sepolia', 'moca', 'kite', 'incentiv', 'camp', 'pharos', '0g', 'sahara', 'nexus']
-    #chain_list = ['moca', 'somnia']
+    #chain_list = ['irys', 'eth_sepolia', 'monad', 'mega', 'somnia', 'rise', 'base_sepolia', 'moca', 'kite', 'incentiv', 'camp', 'pharos', '0g', 'sahara', 'nexus']
+    chain_list = ['moca', 'mega']
     main(chain_list)
     logging.info("Скрипт завершён")
